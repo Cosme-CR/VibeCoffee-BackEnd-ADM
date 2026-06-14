@@ -14,6 +14,34 @@ const usuarioDAO = require("../../model/DAO/usuario/usuario.js")
 /*****************************************************************************************
  * CRIAR FUNCAO DE AUTENTICAR
  *****************************************************************************************/
+async function autenticarUsuario(usuario) {
+    // Cria uma cópia do objeto de mensagens para evitar alterações no original
+    let message = JSON.parse(JSON.stringify(config_message))
+
+    //import da biblioteca que gera e valida o JWT
+    let jwt = require("../../Middleware/MiddlewareJWT.js")
+    
+    // verificar no banco
+    let autentica = await usuarioDAO.authenticateUsuario(usuario.usuario, usuario.senha)
+    
+    if(autentica){
+        // gera o token
+        let tokenUsuario = await jwt.createJWT(usuario.id)
+
+//#########################################################3
+//MODIFICAR MSG PRO PADRAO REST
+         // Configura a mensagem de sucesso
+        message.DEFAULT_MESSAGE.status          = message.SUCCESS_CREATED_ITEM.status
+        message.DEFAULT_MESSAGE.status_code     = message.SUCCESS_CREATED_ITEM.status_code
+        
+        // Adiciona os dados inseridos ao retorno
+        message.DEFAULT_MESSAGE.token = tokenUsuario
+        console.log(tokenUsuario)
+
+        return message.DEFAULT_MESSAGE
+
+    }else { return false }
+}
 
 
 /*****************************************************************************************

@@ -1,3 +1,11 @@
+/*****************************************************************************************
+ * Objetivo: controla a rota de produto
+ * Data:     10/06/2026
+ * Autor:    Cosme Ribeiro
+ * Versão:   1.0
+ *****************************************************************************************/
+
+
 // importe do express
 const controlerProduto = require("../controller/produto/controler_produto.js")
 

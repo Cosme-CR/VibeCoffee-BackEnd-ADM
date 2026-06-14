@@ -13,6 +13,8 @@ const knexConfig    = require('../../database_config_knex/knexFile.js')
 //cria a conexao com o banco de dados
 const knexConex     = knex(knexConfig.development)
 
+
+
 //funcao para inserir dados na tabela de usuario 
 async function insertUsuario(usuario){
 
@@ -144,11 +146,36 @@ async function deleteUsuario(id) {
     
 } 
 
+/*****************************************************************************************
+ * Função para buscar um usuário filtrando por usuário e senha (Autenticação)
+ *****************************************************************************************/
+async function authenticateUsuario(usuario, senha) {
+    try {
+        // Query parametrizada para evitar SQL Injection buscando as credenciais exatas
+        let sql = `select id, nome, usuario from tbl_usuario where usuario = ? and senha = ?`
+
+        // Executa o script passando os valores no array
+        let result = await knexConex.raw(sql, [usuario, senha])
+
+        // Verifica se o script retornou um array válido
+        if (Array.isArray(result)) {
+            return result[0] // Retorna o array de resultados (pode ser vazio se não achar)
+        } else {
+            return false
+        }
+
+    } catch (error) {
+        console.log(error)
+        return false
+    }
+}
+
 module.exports = {
     insertUsuario,
     updateUsuario,
     selectAllUsuario,
     selectByIdUsuario,
-    deleteUsuario
+    deleteUsuario,
+    authenticateUsuario
 
 }

@@ -1,3 +1,11 @@
+/*****************************************************************************************
+ * Objetivo: controla a rota de categoria
+ * Data:     10/06/2026
+ * Autor:    Cosme Ribeiro
+ * Versão:   1.0
+ *****************************************************************************************/
+
+
 // importe do express
 const controllerCategoria = require("../controller/categoria/controler_categoria.js")
 

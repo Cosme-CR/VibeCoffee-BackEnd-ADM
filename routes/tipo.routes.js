@@ -1,3 +1,11 @@
+/*****************************************************************************************
+ * Objetivo: controla a rota de tipo
+ * Data:     10/06/2026
+ * Autor:    
+ * Versão:   1.0
+ *****************************************************************************************/
+
+
 // importe do express
 const controllerTipo = require("../controller/tipo/controler_tipo.js")
 

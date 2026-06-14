@@ -12,7 +12,7 @@ const jwt = require("jsonwebtoken")
 const SECRET = "charvi"
 
 //tempo que ficar valido o token em segundos
-const EXPIRES = 60;
+const EXPIRES = 6000;
 
 //cria jwt retorna um token
 async function createJWT(payload) {
@@ -34,8 +34,8 @@ async function validaJWT(token) {
                 if (!err) {
                         status = true;
                 }
-                return status
         })
+        return status
         
 }
 

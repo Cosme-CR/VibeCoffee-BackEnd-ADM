@@ -23,38 +23,53 @@ const corsOptions = {
 // Habilita CORS na API
 app.use(cors(corsOptions))
 
+//////////////////////////////////////////////////////////////////////////
+// TOKEN E VALIDACAO
+//////////////////////////////////////////////////////////////////////////
+async function verifyJWT(request, response, next) {
+    //importa 
+    let jwt = require("./Middleware/MiddlewareJWT.js")
+
+    //pega o token do headres
+    let token = request.headers["x-access-token"]
+    
+    let autenticidadeToken= await jwt.validaJWT(token)
+    if (autenticidadeToken) {
+        next();
+    }else{
+        return response.status(401).end()
+    }    
+}
+
+//////////////////////////////////////////////////////////////////////////
+// AUTENTICAR
+//////////////////////////////////////////////////////////////////////////
+const autenticaRouter = require("./routes/autenticar.routes.js")
+app.use("/v1/vibecoffee/autenticar", cors(),autenticaRouter)
 
 //////////////////////////////////////////////////////////////////////////
 // PRODUTO
 //////////////////////////////////////////////////////////////////////////
 const produtoRouter = require("./routes/produto.routes.js")
-
-app.use("/v1/vibecoffee/produto", cors(),produtoRouter)
+app.use("/v1/vibecoffee/produto", verifyJWT, cors(),produtoRouter)
 
 //////////////////////////////////////////////////////////////////////////
 // CATEGORIA
 //////////////////////////////////////////////////////////////////////////
 const categoriaRouter = require("./routes/categoria.routes.js")
-
-app.use("/v1/vibecoffee/categoria", cors(),categoriaRouter)
-
+app.use("/v1/vibecoffee/categoria", verifyJWT, cors(),categoriaRouter)
 
 //////////////////////////////////////////////////////////////////////////
 // Tipo
 //////////////////////////////////////////////////////////////////////////
 const tipoRouter = require("./routes/tipo.routes.js")
-
-app.use("/v1/vibecoffee/tipo", cors(),tipoRouter)
-
-
+app.use("/v1/vibecoffee/tipo", verifyJWT, cors(),tipoRouter)
 
 //////////////////////////////////////////////////////////////////////////
 // USUARIO
 //////////////////////////////////////////////////////////////////////////
 const usuarioRouter = require("./routes/usuario.routes.js")
-
-app.use("/v1/vibecoffee/usuario", cors(),usuarioRouter)
-
+app.use("/v1/vibecoffee/usuario", verifyJWT, cors(),usuarioRouter)
 
 //////////////////////////////////////////////////////////////////////////
 // INICIAR API

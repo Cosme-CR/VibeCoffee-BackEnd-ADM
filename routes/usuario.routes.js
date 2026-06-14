@@ -1,3 +1,11 @@
+/*****************************************************************************************
+ * Objetivo: Controla a rota de usuario 
+ * Data:     10/06/2026
+ * Autor:    
+ * Versão:   1.0
+ *****************************************************************************************/
+
+
 // importe do express
 const controlerUsuario = require("../controller/usuario/controler_usuario.js")
 
