@@ -11,6 +11,9 @@ const configMessage = require("../modulo/configMessages.js")
 // Import do DAO  responsavel por fazer o o crud no banco de dados
 const CategoriaDAO = require("../../model/DAO/categoria/categoria.js")
 
+//Import de arquivos de Controller
+const controller_tipo_categoria = require('./controller_tipo_categoria.js')
+
 /*****************************************************************************************
  * Inserir nova categoria
  *****************************************************************************************/
@@ -33,8 +36,20 @@ async function inserirNovaCategoria(categoria, contentType) {
                 let result = await CategoriaDAO.insertCategoria(categoria)
     
                 if (result) {
-    
                     categoria.id = result// coloca o id ao cargo apos ele ser inserido no banco 
+
+                    for(let tipo of categoria.tipo){
+
+                        let categoriaTipo = {   "id_categoria": categoria.id,
+                                                "id_tipo": tipo.id
+                                            }
+
+                        let resultInsertTipo = await controller_tipo_categoria.inserirNovoTipoCategoria(categoriaTipo)    
+                        
+                        if(!resultInsertTipo.status){
+                            return message.SUCCESS_CREATED_ITEM_WARNING
+                        }
+                    }
                     message.DEFAULT_MESSAGE.status      = message.SUCCESS_CREATED_ITEM.status
                     message.DEFAULT_MESSAGE.status_code = message.SUCCESS_CREATED_ITEM.status_code
                     message.DEFAULT_MESSAGE.message     = message.SUCCESS_CREATED_ITEM.message
@@ -73,9 +88,18 @@ async function buscarCategoria(id) {
             }else{
                 
                 let result = await CategoriaDAO.selectByIdCategoria(id)
-    
+
                 if (result) {
                     if (result.length>0) {
+                        for(let categoria of result){
+        
+                            let resultTipo = await controller_tipo_categoria.buscarTipoIdCategoria(categoria.id)
+                            if (resultTipo.status) {
+                                categoria.tipo = resultTipo.response.tipo_categoria
+                            } else {
+                                categoria.tipo = []
+                            }
+                        }
                         message.DEFAULT_MESSAGE.status                  = message.SUCCESS_RESPONSE.status
                         message.DEFAULT_MESSAGE.status_code             = message.SUCCESS_RESPONSE.status_code
                         message.DEFAULT_MESSAGE.response.categoria      = result
@@ -113,6 +137,15 @@ async function listarCategoria() {
         if (result) {
             // valida se a array de retorno do DAO tem algo dentro
             if (result.length>0) {
+
+                for(let categoria of result){
+                    let resultTipo = await controller_tipo_categoria.buscarTipoIdCategoria(categoria.id)
+                    if (resultTipo.status) {
+                        categoria.tipo = resultTipo.response.tipo_categoria
+                    } else {
+                        categoria.tipo = [] 
+                    }
+                }
                     
                 message.DEFAULT_MESSAGE.status              = message.SUCCESS_RESPONSE.status
                 message.DEFAULT_MESSAGE.status_code         = message.SUCCESS_RESPONSE.status_code
@@ -140,47 +173,60 @@ async function listarCategoria() {
  * Atualizar categoria
  *****************************************************************************************/
 async function atualizarCategoria(categoria, id, contentType) {
-
-    //validacao pra aceitar apenas json
     const message = JSON.parse(JSON.stringify(configMessage))
 
     try {
-
         if (String(contentType).toLocaleLowerCase() == 'application/json') {
-    
-                let resultBuscarId = await buscarCategoria(id)                //
-                if (resultBuscarId.status) {
-                    let validar = await validarDados(categoria)
-                    if (!validar) {
-                        
-                        // Adiciona o atributo ID da categoria ao objeto para atualização
-                        categoria.id = id
-                        //chama a funcao do dao pra atualizar categoria de dentro do banco de dados
-                        let result = await CategoriaDAO.updateCategoria(categoria)
-    
-                        if (result) {
-                            message.DEFAULT_MESSAGE.status      = message.SUCCESS_UPDATE_ITEM.status
-                            message.DEFAULT_MESSAGE.status_code = message.SUCCESS_UPDATE_ITEM.status_code
-                            message.DEFAULT_MESSAGE.message     = message.SUCCESS_UPDATE_ITEM.message
-                            message.DEFAULT_MESSAGE.response    = categoria
 
-                            return message.DEFAULT_MESSAGE
-     
+            let resultBuscarId = await buscarCategoria(id)
+
+            if (resultBuscarId.status) {
+                let validar = await validarDados(categoria)
+
+                if (!validar) {
+                    categoria.id = id
+
+                    let result = await CategoriaDAO.updateCategoria(categoria)
+
+                    if (result) {
+                        let resultDeleteTipo = await controller_tipo_categoria.excluirTipoIdCategoria(categoria.id)
+
+                        if (resultDeleteTipo.status) {
+                            for (let tipo of categoria.tipo) {
+                                let categoriaTipo = {
+                                    "id_categoria": categoria.id,
+                                    "id_tipo": tipo.id
+                                }
+                                let resultInsertTipo = await controller_tipo_categoria.inserirNovoTipoCategoria(categoriaTipo)
+
+                                if (!resultInsertTipo.status) {
+                                    return message.SUCCESS_CREATED_ITEM_WARNING
+                                }
+                            }
                         } else {
-                            return message.ERROR_INTERNAL_SERVER_MODEL//500
+                            return message.ERROR_INTERNAL_SERVER_MODEL
                         }
-                    }else{
-                        return validar
+
+                        message.DEFAULT_MESSAGE.status      = message.SUCCESS_UPDATE_ITEM.status
+                        message.DEFAULT_MESSAGE.status_code = message.SUCCESS_UPDATE_ITEM.status_code
+                        message.DEFAULT_MESSAGE.message     = message.SUCCESS_UPDATE_ITEM.message
+                        message.DEFAULT_MESSAGE.response    = categoria
+
+                        return message.DEFAULT_MESSAGE // 200
+
+                    } else {
+                        return message.ERROR_INTERNAL_SERVER_MODEL
                     }
-                }else{
-                    return resultBuscarId//400 ou 404 ou 500
+                } else {
+                    return validar
                 }
-            }else{
-                return message.ERROR_CONTENT_TYPE//415 tipo errado
+            } else {
+                return resultBuscarId
             }
-
+        } else {
+            return message.ERROR_CONTENT_TYPE
+        }
     } catch (error) {
-
         console.error(error)
         return message.ERROR_INTERNAL_SERVER_CONTROLLER
     }
