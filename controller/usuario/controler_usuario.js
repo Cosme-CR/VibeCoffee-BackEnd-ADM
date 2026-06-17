@@ -11,6 +11,7 @@ const config_message = require("../modulo/configMessages.js")
 // Import do DAO de produto
 const usuarioDAO = require("../../model/DAO/usuario/usuario.js")
 
+
 /*****************************************************************************************
  * CRIAR FUNCAO DE AUTENTICAR
  *****************************************************************************************/
@@ -26,13 +27,11 @@ async function autenticarUsuario(usuario) {
     
     if(autentica){
         // gera o token
-        let tokenUsuario = await jwt.createJWT(usuario.id)
+        let tokenUsuario = await jwt.createJWT(autentica.id)
+        console.log("o id e: "+ autentica.id)
 
-//#########################################################3
-//MODIFICAR MSG PRO PADRAO REST
-         // Configura a mensagem de sucesso
-        message.DEFAULT_MESSAGE.status          = message.SUCCESS_CREATED_ITEM.status
-        message.DEFAULT_MESSAGE.status_code     = message.SUCCESS_CREATED_ITEM.status_code
+        message.DEFAULT_MESSAGE.status          = message.SUCCESS_AUTHENTICATION.status
+        message.DEFAULT_MESSAGE.status_code     = message.SUCCESS_AUTHENTICATION.status_code
         
         // Adiciona os dados inseridos ao retorno
         message.DEFAULT_MESSAGE.token = tokenUsuario
@@ -40,7 +39,16 @@ async function autenticarUsuario(usuario) {
 
         return message.DEFAULT_MESSAGE
 
-    }else { return false }
+    }else { 
+
+         // Configura a mensagem de de erro
+        message.DEFAULT_MESSAGE.status          = message.ERROR_UNAUTHORIZED.status
+        message.DEFAULT_MESSAGE.status_code     = message.ERROR_UNAUTHORIZED.status_code
+        
+        return message.DEFAULT_MESSAGE
+
+
+    }
 }
 
 
@@ -342,6 +350,7 @@ module.exports = {
     listarUsuarios,
     buscarUsuario,
     atualizarUsuario,
-    apagarUsuario
+    apagarUsuario,
+    autenticarUsuario
 }
 

@@ -1,0 +1,1110 @@
+openapi: 3.0.0
+info:
+  title: VibeCoffee-BackEnd-ADM API
+  version: 1.0.0
+  description: "Documenta\xE7\xE3o da API de backend administrativo para o sistema\
+    \ VibeCoffee."
+servers:
+- url: http://localhost:8080/v1/vibecoffee
+  description: Servidor de Desenvolvimento
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Autentica\xE7\xE3o JWT. Forne\xE7a o token no cabe\xE7alho x-access-token."
+  schemas:
+    Usuario:
+      type: object
+      required:
+      - nome
+      - usuario
+      - senha
+      properties:
+        id:
+          type: integer
+          readOnly: true
+          description: "ID do usu\xE1rio (gerado automaticamente)"
+        nome:
+          type: string
+          maxLength: 100
+          description: "Nome completo do usu\xE1rio"
+        usuario:
+          type: string
+          maxLength: 100
+          description: "Nome de usu\xE1rio para login"
+        senha:
+          type: string
+          maxLength: 254
+          description: "Senha do usu\xE1rio"
+      example:
+        nome: "Jo\xE3o Silva"
+        usuario: joao.silva
+        senha: senha123
+    Login:
+      type: object
+      required:
+      - usuario
+      - senha
+      properties:
+        usuario:
+          type: string
+          description: "Nome de usu\xE1rio para login"
+        senha:
+          type: string
+          description: "Senha do usu\xE1rio"
+      example:
+        usuario: joao.silva
+        senha: senha123
+    Produto:
+      type: object
+      required:
+      - nome
+      - descricao
+      - foto
+      - status
+      - tipo_categoria
+      properties:
+        id:
+          type: integer
+          readOnly: true
+          description: ID do produto (gerado automaticamente)
+        nome:
+          type: string
+          maxLength: 50
+          description: Nome do produto
+        descricao:
+          type: string
+          description: "Descri\xE7\xE3o detalhada do produto"
+        foto:
+          type: string
+          maxLength: 254
+          description: URL da foto do produto
+        status:
+          type: boolean
+          description: Status do produto (ativo/inativo)
+        tipo_categoria:
+          type: array
+          items:
+            type: object
+            required:
+            - id_tipo_categoria
+            - preco
+            properties:
+              id_tipo_categoria:
+                type: integer
+                description: "ID da rela\xE7\xE3o tipo-categoria"
+              preco:
+                type: number
+                format: float
+                description: "Pre\xE7o do produto para este tipo-categoria"
+          description: "Lista de tipos de categoria associados ao produto com seus\
+            \ pre\xE7os"
+      example:
+        nome: "Caf\xE9 Expresso"
+        descricao: "Caf\xE9 forte e arom\xE1tico."
+        foto: http://example.com/expresso.jpg
+        status: true
+        tipo_categoria:
+        - id_tipo_categoria: 1
+          preco: 5.5
+        - id_tipo_categoria: 2
+          preco: 7
+    Categoria:
+      type: object
+      required:
+      - categoria
+      - tipo
+      properties:
+        id:
+          type: integer
+          readOnly: true
+          description: ID da categoria (gerado automaticamente)
+        categoria:
+          type: string
+          maxLength: 100
+          description: Nome da categoria
+        tipo:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            properties:
+              id:
+                type: integer
+                description: "ID do tipo associado \xE0 categoria"
+          description: Lista de IDs de tipos associados a esta categoria
+      example:
+        categoria: Bebidas Quentes
+        tipo:
+        - id: 1
+        - id: 2
+    Tipo:
+      type: object
+      required:
+      - tipo
+      properties:
+        id:
+          type: integer
+          readOnly: true
+          description: ID do tipo (gerado automaticamente)
+        tipo:
+          type: string
+          maxLength: 45
+          description: "Nome do tipo (ex: Pequeno, M\xE9dio, Grande)"
+      example:
+        tipo: Pequeno
+    Error:
+      type: object
+      properties:
+        status:
+          type: boolean
+          example: false
+        status_code:
+          type: integer
+          example: 400
+        message:
+          type: string
+          example: "Requisi\xE7\xE3o inv\xE1lida"
+        field:
+          type: string
+          example: "[NOME] inv\xE1lido"
+    SuccessResponse:
+      type: object
+      properties:
+        status:
+          type: boolean
+          example: true
+        status_code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Opera\xE7\xE3o realizada com sucesso!"
+        response:
+          type: object
+          description: "Objeto de resposta contendo os dados da opera\xE7\xE3o."
+    AuthSuccessResponse:
+      type: object
+      properties:
+        status:
+          type: boolean
+          example: true
+        status_code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Opera\xE7\xE3o realizada com sucesso!"
+        response:
+          type: object
+          description: Objeto de resposta vazio.
+        token:
+          type: string
+          description: "Token JWT para autentica\xE7\xE3o."
+paths:
+  /usuario:
+    post:
+      summary: "Cria um novo usu\xE1rio."
+      tags:
+      - "Usu\xE1rios"
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Usuario'
+      responses:
+        '201':
+          description: "Usu\xE1rio criado com sucesso."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: "Requisi\xE7\xE3o inv\xE1lida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "N\xE3o autorizado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '415':
+          description: "Tipo de m\xEDdia n\xE3o suportado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: "Lista todos os usu\xE1rios."
+      tags:
+      - "Usu\xE1rios"
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: "Lista de usu\xE1rios retornada com sucesso."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: "N\xE3o autorizado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Nenhum usu\xE1rio encontrado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /usuario/{id}:
+    get:
+      summary: "Busca um usu\xE1rio pelo ID."
+      tags:
+      - "Usu\xE1rios"
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: "ID do usu\xE1rio."
+      responses:
+        '200':
+          description: "Usu\xE1rio encontrado com sucesso."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: "ID inv\xE1lido."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "N\xE3o autorizado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Usu\xE1rio n\xE3o encontrado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: "Atualiza um usu\xE1rio existente."
+      tags:
+      - "Usu\xE1rios"
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: "ID do usu\xE1rio a ser atualizado."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Usuario'
+      responses:
+        '200':
+          description: "Usu\xE1rio atualizado com sucesso."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: "Requisi\xE7\xE3o inv\xE1lida ou ID n\xE3o encontrado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "N\xE3o autorizado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '415':
+          description: "Tipo de m\xEDdia n\xE3o suportado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: "Exclui um usu\xE1rio pelo ID."
+      tags:
+      - "Usu\xE1rios"
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: "ID do usu\xE1rio a ser exclu\xEDdo."
+      responses:
+        '200':
+          description: "Usu\xE1rio exclu\xEDdo com sucesso."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: "ID inv\xE1lido."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "N\xE3o autorizado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Usu\xE1rio n\xE3o encontrado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /tipo:
+    post:
+      summary: Insere um novo tipo.
+      tags:
+      - Tipos
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tipo'
+      responses:
+        '201':
+          description: Tipo criado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: "Requisi\xE7\xE3o inv\xE1lida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "N\xE3o autorizado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '415':
+          description: "Tipo de m\xEDdia n\xE3o suportado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Lista todos os tipos.
+      tags:
+      - Tipos
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de tipos retornada com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: "N\xE3o autorizado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Nenhum tipo encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /tipo/{id}:
+    get:
+      summary: Busca um tipo pelo ID.
+      tags:
+      - Tipos
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: ID do tipo.
+      responses:
+        '200':
+          description: Tipo encontrado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: "ID inv\xE1lido."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "N\xE3o autorizado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Tipo n\xE3o encontrado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Atualiza um tipo existente.
+      tags:
+      - Tipos
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: ID do tipo a ser atualizado.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tipo'
+      responses:
+        '200':
+          description: Tipo atualizado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: "Requisi\xE7\xE3o inv\xE1lida ou ID n\xE3o encontrado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "N\xE3o autorizado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '415':
+          description: "Tipo de m\xEDdia n\xE3o suportado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Exclui um tipo pelo ID.
+      tags:
+      - Tipos
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: "ID do tipo a ser exclu\xEDdo."
+      responses:
+        '200':
+          description: "Tipo exclu\xEDdo com sucesso."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: "ID inv\xE1lido."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "N\xE3o autorizado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Tipo n\xE3o encontrado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /produto:
+    post:
+      summary: Insere um novo produto.
+      tags:
+      - Produtos
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Produto'
+      responses:
+        '201':
+          description: Produto criado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: "Requisi\xE7\xE3o inv\xE1lida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "N\xE3o autorizado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '415':
+          description: "Tipo de m\xEDdia n\xE3o suportado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Lista todos os produtos.
+      tags:
+      - Produtos
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de produtos retornada com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: "N\xE3o autorizado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Nenhum produto encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /produto/{id}:
+    get:
+      summary: Busca um produto pelo ID.
+      tags:
+      - Produtos
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: ID do produto.
+      responses:
+        '200':
+          description: Produto encontrado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: "ID inv\xE1lido."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "N\xE3o autorizado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Produto n\xE3o encontrado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Atualiza um produto existente.
+      tags:
+      - Produtos
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: ID do produto a ser atualizado.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Produto'
+      responses:
+        '200':
+          description: Produto atualizado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: "Requisi\xE7\xE3o inv\xE1lida ou ID n\xE3o encontrado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "N\xE3o autorizado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '415':
+          description: "Tipo de m\xEDdia n\xE3o suportado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Exclui um produto pelo ID.
+      tags:
+      - Produtos
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: "ID do produto a ser exclu\xEDdo."
+      responses:
+        '200':
+          description: "Produto exclu\xEDdo com sucesso."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: "ID inv\xE1lido."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "N\xE3o autorizado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Produto n\xE3o encontrado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /categoria:
+    post:
+      summary: Insere uma nova categoria.
+      tags:
+      - Categorias
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Categoria'
+      responses:
+        '201':
+          description: Categoria criada com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: "Requisi\xE7\xE3o inv\xE1lida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "N\xE3o autorizado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '415':
+          description: "Tipo de m\xEDdia n\xE3o suportado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Lista todas as categorias.
+      tags:
+      - Categorias
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de categorias retornada com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: "N\xE3o autorizado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Nenhuma categoria encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /categoria/{id}:
+    get:
+      summary: Busca uma categoria pelo ID.
+      tags:
+      - Categorias
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: ID da categoria.
+      responses:
+        '200':
+          description: Categoria encontrada com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: "ID inv\xE1lido."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "N\xE3o autorizado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Categoria n\xE3o encontrada."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Atualiza uma categoria existente.
+      tags:
+      - Categorias
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: ID da categoria a ser atualizada.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Categoria'
+      responses:
+        '200':
+          description: Categoria atualizada com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: "Requisi\xE7\xE3o inv\xE1lida ou ID n\xE3o encontrado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "N\xE3o autorizado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '415':
+          description: "Tipo de m\xEDdia n\xE3o suportado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Exclui uma categoria pelo ID.
+      tags:
+      - Categorias
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+        description: "ID da categoria a ser exclu\xEDda."
+      responses:
+        '200':
+          description: "Categoria exclu\xEDda com sucesso."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: "ID inv\xE1lido."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "N\xE3o autorizado."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Categoria n\xE3o encontrada."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /autenticar:
+    post:
+      summary: "Autentica um usu\xE1rio e retorna um token JWT."
+      tags:
+      - "Autentica\xE7\xE3o"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+      responses:
+        '200':
+          description: "Autentica\xE7\xE3o bem-sucedida, retorna token JWT."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSuccessResponse'
+        '400':
+          description: "Requisi\xE7\xE3o inv\xE1lida."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "Credenciais inv\xE1lidas."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro interno do servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+tags:
+- name: "Usu\xE1rios"
+  description: "Gerenciamento de usu\xE1rios"
+- name: Tipos
+  description: Gerenciamento de tipos de produtos/categorias
+- name: Produtos
+  description: Gerenciamento de produtos
+- name: Categorias
+  description: Gerenciamento de categorias
+- name: "Autentica\xE7\xE3o"
+  description: "Endpoints para autentica\xE7\xE3o de usu\xE1rios"

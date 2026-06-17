@@ -151,18 +151,15 @@ async function deleteUsuario(id) {
  *****************************************************************************************/
 async function authenticateUsuario(usuario, senha) {
     try {
-        // Query parametrizada para evitar SQL Injection buscando as credenciais exatas
-        let sql = `select id, nome, usuario from tbl_usuario where usuario = ? and senha = ?`
 
-        // Executa o script passando os valores no array
-        let result = await knexConex.raw(sql, [usuario, senha])
+        let result = await knexConex('tbl_usuario')
+            .select('id', 'nome', 'usuario')
+            .where({
+                usuario: usuario,
+                senha: senha
+            })
 
-        // Verifica se o script retornou um array válido
-        if (Array.isArray(result)) {
-            return result[0] // Retorna o array de resultados (pode ser vazio se não achar)
-        } else {
-            return false
-        }
+        return result.length > 0 ? result[0] : false
 
     } catch (error) {
         console.log(error)

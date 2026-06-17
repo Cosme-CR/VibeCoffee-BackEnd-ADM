@@ -81,7 +81,21 @@ const SUCCESS_CREATED_ITEM_WARNING = {
     message:        "Os dados principais foram inseridos com sucesso, porém alguns dados apresentaram problemas."
 }
     
-    
+// Mensagem de sucesso na autenticação 
+const SUCCESS_AUTHENTICATION = {
+    status:         true,
+    status_code:    200,
+    message:        "Autenticação realizada com sucesso.",
+    token:          "" // O JWT gerado será injetado aqui dinamicamente pela controller
+}
+
+// Mensagem de erro para credenciais inválidas (Usuário ou Senha incorretos)
+const ERROR_UNAUTHORIZED = {
+    status:         false,
+    status_code:    401,
+    message:        "Usuário ou senha inválidos. Acesso negado."
+}
+  
 module.exports = {
     DEFAULT_MESSAGE,
     ERROR_BAD_REQUEST,
@@ -93,5 +107,7 @@ module.exports = {
     SUCCESS_RESPONSE,
     SUCCESS_UPDATE_ITEM,
     SUCCESS_DELETE_ITEM,
-    SUCCESS_CREATED_ITEM_WARNING
+    SUCCESS_CREATED_ITEM_WARNING,
+    SUCCESS_AUTHENTICATION,
+    ERROR_UNAUTHORIZED
 }

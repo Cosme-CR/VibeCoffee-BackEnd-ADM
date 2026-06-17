@@ -15,9 +15,9 @@ const app = express()
 
 // Configuração do CORS
 const corsOptions = {
-    origin: ["*"],
+    origin: '*',
     methods: "GET,POST,PUT,DELETE,OPTIONS",
-    allowedHeaders: ["Content-Type", "Authorization"]
+    allowedHeaders: ["Content-Type", "Authorization", "x-access-token"]
 }
 
 // Habilita CORS na API
