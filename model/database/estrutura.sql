@@ -64,3 +64,108 @@ create table tbl_produto_tipo_categoria (
     foreign key (id_tbl_tipo_categoria)
     references tbl_tipo_categoria(id)
 );
+
+
+
+
+
+
+
+
+
+
+--#TRIGGER
+
+
+DELIMITER $
+
+-- ============================================================
+-- TRIGGER 1: Ao deletar PRODUTO
+-- Remove todos os registros filhos em tbl_produto_tipo_categoria
+-- ============================================================
+CREATE TRIGGER trg_before_delete_produto
+BEFORE DELETE ON tbl_produto
+FOR EACH ROW
+BEGIN
+    DELETE FROM tbl_produto_tipo_categoria
+    WHERE id_tbl_produto = OLD.id;
+END$
+
+
+-- ============================================================
+-- TRIGGER 2: Ao deletar TIPO
+-- 1º Remove de tbl_produto_tipo_categoria (filha)
+-- 2º Remove de tbl_tipo_categoria (intermediária)
+-- ============================================================
+CREATE TRIGGER trg_before_delete_tipo
+BEFORE DELETE ON tbl_tipo
+FOR EACH ROW
+BEGIN
+    DELETE FROM tbl_produto_tipo_categoria
+    WHERE id_tbl_tipo_categoria IN (
+        SELECT id FROM tbl_tipo_categoria
+        WHERE id_tipo = OLD.id
+    );
+
+    DELETE FROM tbl_tipo_categoria
+    WHERE id_tipo = OLD.id;
+END$
+
+
+-- ============================================================
+-- TRIGGER 3: Ao deletar CATEGORIA
+-- 1º Remove de tbl_produto_tipo_categoria (filha mais funda)
+-- 2º Remove de tbl_tipo_categoria (intermediária)
+-- 3º Remove de tbl_tipo (os tipos ligados à categoria)
+-- 4º Remove de tbl_produto (os produtos ligados via tipo_categoria)
+-- ============================================================
+CREATE TRIGGER trg_before_delete_categoria
+BEFORE DELETE ON tbl_categoria
+FOR EACH ROW
+BEGIN
+    -- Remove produto_tipo_categoria ligados à categoria
+    DELETE FROM tbl_produto_tipo_categoria
+    WHERE id_tbl_tipo_categoria IN (
+        SELECT id FROM tbl_tipo_categoria
+        WHERE id_categoria = OLD.id
+    );
+
+    -- Remove os produtos ligados à categoria via tbl_produto_tipo_categoria
+    -- (produtos que só existiam por causa dessa categoria)
+    DELETE FROM tbl_produto
+    WHERE id IN (
+        SELECT DISTINCT ptc.id_tbl_produto
+        FROM tbl_produto_tipo_categoria ptc
+        INNER JOIN tbl_tipo_categoria tc ON ptc.id_tbl_tipo_categoria = tc.id
+        WHERE tc.id_categoria = OLD.id
+    );
+
+    -- Remove a relação tipo_categoria
+    DELETE FROM tbl_tipo_categoria
+    WHERE id_categoria = OLD.id;
+
+    -- Remove os tipos ligados à categoria
+    DELETE FROM tbl_tipo
+    WHERE id IN (
+        SELECT id_tipo FROM tbl_tipo_categoria
+        WHERE id_categoria = OLD.id
+    );
+END$
+
+
+-- ============================================================
+-- TRIGGER 4: Ao deletar TIPO_CATEGORIA
+-- Tabela pai: tbl_tipo_categoria
+-- Tabela filha: tbl_produto_tipo_categoria (FK: id_tbl_tipo_categoria)
+-- Remove todos os registros filhos em tbl_produto_tipo_categoria
+-- ============================================================
+CREATE TRIGGER trg_before_delete_tipo_categoria
+BEFORE DELETE ON tbl_tipo_categoria
+FOR EACH ROW
+BEGIN
+    DELETE FROM tbl_produto_tipo_categoria
+    WHERE id_tbl_tipo_categoria = OLD.id;
+END$
+
+
+DELIMITER ;
