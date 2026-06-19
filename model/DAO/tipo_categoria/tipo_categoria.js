@@ -104,6 +104,36 @@ const selectByIdTipoCategoria = async function(id){
     }
 }
 
+// Função para listar todos os tipo_categoria com nomes de tipo e categoria
+const selectAllTipoCategoriaCompleto = async function(){
+    try {
+        let sql = `
+            SELECT 
+                tbl_tipo_categoria.id,
+                tbl_tipo_categoria.id_tipo,
+                tbl_tipo.tipo           AS nome_tipo,
+                tbl_tipo_categoria.id_categoria,
+                tbl_categoria.categoria AS nome_categoria
+            FROM tbl_tipo_categoria
+                INNER JOIN tbl_tipo
+                    ON tbl_tipo.id = tbl_tipo_categoria.id_tipo
+                INNER JOIN tbl_categoria
+                    ON tbl_categoria.id = tbl_tipo_categoria.id_categoria
+            ORDER BY tbl_categoria.categoria, tbl_tipo.tipo
+        `
+        let result = await knexConex.raw(sql)
+
+        if(Array.isArray(result)){
+            return result[0]
+        }else{
+            return false
+        }
+    } catch (error) {
+        console.log(error)
+        return false
+    }
+}
+
 //Função para retornar os dados as categorias filtrando pelo ID do tipo
 //A pessoa solicita o tipo e eu devolvo os dados da categoria
 const selectCategoriaByIdTipo = async function(idTipo){
@@ -152,7 +182,6 @@ const selectTipoByIdCategoria = async function(idCategoria){
     }
 }
 
-
 //Função para excluir uma relacao entre tipo e categoria filtrando pelo ID
 const deleteTipoCategoria = async function(id){
     try {
@@ -187,10 +216,24 @@ const deleteTiposByIdCategoria = async function(idCategoria) {
     }
 }
 
+// Função para excluir a relação filtrando pelo ID do tipo
+// Utilizada no update do tipo para limpar a relação antes de reinserir
+const deleteTiposByIdTipo = async function(idTipo) {
+    try {
+        let sql = `delete from tbl_tipo_categoria where id_tipo=${idTipo}`
+        await knexConex.raw(sql)
+        return true
+    } catch (error) {
+        console.log(error)
+        return false
+    }
+}
+
 module.exports = {
     insertTipoCategoria,
     updateTipoCategoria,
     selectAllTipoCategoria,
+    selectAllTipoCategoriaCompleto,
     selectByIdTipoCategoria,
     selectCategoriaByIdTipo,
     selectTipoByIdCategoria,

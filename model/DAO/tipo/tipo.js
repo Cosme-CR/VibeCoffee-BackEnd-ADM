@@ -68,25 +68,30 @@ async function updateTipo(tipo) {
 //funcao para retornar todos os dados da tabela de tipo
 async function selectAllTipo() {
     try {
-        //script select pra ver todos os tipo
-        let sql = `select * from tbl_tipo order by id desc`
+        let sql = `
+                SELECT 
+                    tbl_tipo.id,
+                    tbl_tipo.tipo,
+                    tbl_tipo_categoria.id_categoria,
+                    tbl_categoria.categoria AS nome_categoria
+                FROM tbl_tipo
+                LEFT JOIN tbl_tipo_categoria
+                    ON tbl_tipo_categoria.id_tipo = tbl_tipo.id
+                LEFT JOIN tbl_categoria
+                    ON tbl_categoria.id = tbl_tipo_categoria.id_categoria
+                ORDER BY tbl_categoria.categoria ASC, tbl_tipo.tipo ASC
+                `
 
-        // executa o script no banco
         let result = await knexConex.raw(sql)
 
-        // verifica se o script retornou um array
         if (Array.isArray(result)) {
-            return result[0] 
-        }else{
+            return result[0]
+        } else {
             return false
         }
-
     } catch (error) {
-        //console.log(error)
-        return false 
-        
+        return false
     }
-
 }
 
 //função para retornar os dados da tipo filtrando pelo id

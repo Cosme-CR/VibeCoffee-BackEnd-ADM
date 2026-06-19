@@ -38,18 +38,6 @@ async function inserirNovaCategoria(categoria, contentType) {
                 if (result) {
                     categoria.id = result// coloca o id ao cargo apos ele ser inserido no banco 
 
-                    for(let tipo of categoria.tipo){
-
-                        let categoriaTipo = {   "id_categoria": categoria.id,
-                                                "id_tipo": tipo.id
-                                            }
-
-                        let resultInsertTipo = await controller_tipo_categoria.inserirNovoTipoCategoria(categoriaTipo)    
-                        
-                        if(!resultInsertTipo.status){
-                            return message.SUCCESS_CREATED_ITEM_WARNING
-                        }
-                    }
                     message.DEFAULT_MESSAGE.status      = message.SUCCESS_CREATED_ITEM.status
                     message.DEFAULT_MESSAGE.status_code = message.SUCCESS_CREATED_ITEM.status_code
                     message.DEFAULT_MESSAGE.message     = message.SUCCESS_CREATED_ITEM.message
@@ -192,17 +180,7 @@ async function atualizarCategoria(categoria, id, contentType) {
                         let resultDeleteTipo = await controller_tipo_categoria.excluirTipoIdCategoria(categoria.id)
 
                         if (resultDeleteTipo.status) {
-                            for (let tipo of categoria.tipo) {
-                                let categoriaTipo = {
-                                    "id_categoria": categoria.id,
-                                    "id_tipo": tipo.id
-                                }
-                                let resultInsertTipo = await controller_tipo_categoria.inserirNovoTipoCategoria(categoriaTipo)
-
-                                if (!resultInsertTipo.status) {
-                                    return message.SUCCESS_CREATED_ITEM_WARNING
-                                }
-                            }
+                             return message.SUCCESS_CREATED_ITEM_WARNING
                         } else {
                             return message.ERROR_INTERNAL_SERVER_MODEL
                         }

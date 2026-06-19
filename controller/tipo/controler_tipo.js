@@ -11,49 +11,56 @@ const configMessage = require("../modulo/configMessages.js")
 // Import do DAO responsavel por fazer o crud no banco de dados
 const TipoDAO = require("../../model/DAO/tipo/tipo.js")
 
+const controller_tipo_categoria = require('../categoria/controller_tipo_categoria.js')
+
 /*****************************************************************************************
  * Inserir novo tipo
  *****************************************************************************************/
 async function inserirNovoTipo(tipo, contentType) {
-
-    // Cria uma cópia do objeto de mensagens para evitar alterações no original
     let message = JSON.parse(JSON.stringify(configMessage))
-    
+
     try {
-    
         if (String(contentType).toLocaleLowerCase() == 'application/json') {
-            
+
             let validar = await validarDados(tipo)
-    
-            // se validar retornar algo significa que é json de erro e ja sera retornado 
-            if(validar){
+
+            if (validar) {
                 return validar
-            }else{
-                // Encaminha os dados do tipo para o DAO
+            } else {
                 let result = await TipoDAO.insertTipo(tipo)
-    
+
                 if (result) {
-    
-                    tipo.id = result // coloca o id ao cargo apos ele ser inserido no banco 
+                    tipo.id = result
+
+                    // Após inserir o tipo, cria a relação com a categoria
+                    let tipoCategoria = {
+                        id_tipo:      tipo.id,
+                        id_categoria: tipo.id_categoria
+                    }
+                    let resultTipoCategoria = await controller_tipo_categoria.inserirNovoTipoCategoria(tipoCategoria)
+
+                    if (!resultTipoCategoria.status) {
+                        return message.ERROR_INTERNAL_SERVER_MODEL
+                    }
+
                     message.DEFAULT_MESSAGE.status      = message.SUCCESS_CREATED_ITEM.status
                     message.DEFAULT_MESSAGE.status_code = message.SUCCESS_CREATED_ITEM.status_code
                     message.DEFAULT_MESSAGE.message     = message.SUCCESS_CREATED_ITEM.message
                     message.DEFAULT_MESSAGE.response    = tipo
-                            
-                }else{
-                    return message.ERROR_INTERNAL_SERVER_MODEL // erro 500
-                        
+
+                } else {
+                    return message.ERROR_INTERNAL_SERVER_MODEL
                 }
-                 return message.DEFAULT_MESSAGE
+                return message.DEFAULT_MESSAGE
             }
-        }else{return message.ERROR_CONTENT_TYPE} // 415
-                
+        } else {
+            return message.ERROR_CONTENT_TYPE
+        }
+
     } catch (error) {
         console.error(error)
-
-        return message.ERROR_INTERNAL_SERVER_CONTROLLER // 500
+        return message.ERROR_INTERNAL_SERVER_CONTROLLER
     }
-        
 }
 
 /*****************************************************************************************
@@ -139,47 +146,57 @@ async function listarTipo() {
  * Atualizar tipo
  *****************************************************************************************/
 async function atualizarTipo(tipo, id, contentType) {
-
-    // validacao pra aceitar apenas json
     const message = JSON.parse(JSON.stringify(configMessage))
 
     try {
-
         if (String(contentType).toLocaleLowerCase() == 'application/json') {
-    
-                let resultBuscarId = await buscarTipo(id)
-                if (resultBuscarId.status) {
-                    let validar = await validarDados(tipo)
-                    if (!validar) {
-                        
-                        // Adiciona o atributo ID do tipo ao objeto para atualização
-                        tipo.id = id
-                        // chama a funcao do dao pra atualizar tipo de dentro do banco de dados
-                        let result = await TipoDAO.updateTipo(tipo)
-    
-                        if (result) {
-                            message.DEFAULT_MESSAGE.status      = message.SUCCESS_UPDATE_ITEM.status
-                            message.DEFAULT_MESSAGE.status_code = message.SUCCESS_UPDATE_ITEM.status_code
-                            message.DEFAULT_MESSAGE.message     = message.SUCCESS_UPDATE_ITEM.message
-                            message.DEFAULT_MESSAGE.response    = tipo
 
-                            return message.DEFAULT_MESSAGE
-     
-                        } else {
-                            return message.ERROR_INTERNAL_SERVER_MODEL // 500
+            let resultBuscarId = await buscarTipo(id)
+
+            if (resultBuscarId.status) {
+                let validar = await validarDados(tipo)
+
+                if (!validar) {
+                    tipo.id = id
+
+                    let result = await TipoDAO.updateTipo(tipo)
+
+                    if (result) {
+
+                        // Apaga a relação antiga e recria com a nova categoria
+                        await controller_tipo_categoria.excluirTipoCategoriaByIdTipo(id)
+
+                        let tipoCategoria = {
+                            id_tipo:      id,
+                            id_categoria: tipo.id_categoria
                         }
-                    }else{
-                        return validar
+                        let resultTipoCategoria = await controller_tipo_categoria.inserirNovoTipoCategoria(tipoCategoria)
+
+                        if (!resultTipoCategoria.status) {
+                            return message.ERROR_INTERNAL_SERVER_MODEL
+                        }
+
+                        message.DEFAULT_MESSAGE.status      = message.SUCCESS_UPDATE_ITEM.status
+                        message.DEFAULT_MESSAGE.status_code = message.SUCCESS_UPDATE_ITEM.status_code
+                        message.DEFAULT_MESSAGE.message     = message.SUCCESS_UPDATE_ITEM.message
+                        message.DEFAULT_MESSAGE.response    = tipo
+
+                        return message.DEFAULT_MESSAGE
+
+                    } else {
+                        return message.ERROR_INTERNAL_SERVER_MODEL
                     }
-                }else{
-                    return resultBuscarId // 400 ou 404 ou 500
+                } else {
+                    return validar
                 }
-            }else{
-                return message.ERROR_CONTENT_TYPE // 415 tipo errado
+            } else {
+                return resultBuscarId
             }
+        } else {
+            return message.ERROR_CONTENT_TYPE
+        }
 
     } catch (error) {
-
         console.error(error)
         return message.ERROR_INTERNAL_SERVER_CONTROLLER
     }
@@ -226,19 +243,28 @@ async function apagarTipo(id) {
  * Validação dos dados do tipo
  *****************************************************************************************/
 async function validarDados(tipo) {
-
     const message = JSON.parse(JSON.stringify(configMessage))
 
     if (
-        //!tipo ||
-        tipo.tipo         == undefined ||
-        tipo.tipo         == null      ||
-        tipo.tipo.trim()  == ""        || // trim() remove espaços em branco do início e do final da string
-        tipo.tipo.length  > 45
+        tipo.tipo        == undefined ||
+        tipo.tipo        == null      ||
+        tipo.tipo.trim() == ""        ||
+        tipo.tipo.length > 45
     ) {
         message.ERROR_BAD_REQUEST.field = "[tipo] inválido"
         return message.ERROR_BAD_REQUEST
-    }else{return false }
+
+    } else if (
+        tipo.id_categoria == undefined ||
+        tipo.id_categoria == null      ||
+        isNaN(tipo.id_categoria)
+    ) {
+        message.ERROR_BAD_REQUEST.field = "[id_categoria] inválido"
+        return message.ERROR_BAD_REQUEST
+
+    } else {
+        return false
+    }
 }
    
 /*****************************************************************************************

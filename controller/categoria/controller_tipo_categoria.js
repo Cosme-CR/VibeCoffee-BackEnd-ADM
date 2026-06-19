@@ -80,34 +80,34 @@ const atualizarTipoCategoria = async function(tipoCategoria, id) {
     }
 }
 
-//Função para retornar TODOS os generos
-const listarGeneroFilme = async function(){
+//Função para retornar TODOS os tipoa categorias com os nomes das categorias e tipos relacionados
+const listarTipoCategoria = async function(){
     let message = JSON.parse(JSON.stringify(config_message))
-    
-        try {
-            let result = await generoFilmeDAO.selectAllGeneroFilme()    
-    
-            //Valida se o DAO conseguiu processar os dados
-            if(result){
-                //Validação para verificar se existe conteúdo no array
-                if(result.length > 0){
-                    message.DEFAULT_MESSAGE.status = message.SUCCESS_RESPONSE.status
-                    message.DEFAULT_MESSAGE.status_code = message.SUCCESS_RESPONSE.status_code
-                    message.DEFAULT_MESSAGE.response.count = result.length
-                    message.DEFAULT_MESSAGE.response.genero_filme = result
-    
-                    return message.DEFAULT_MESSAGE //200 (Dados do Filme)
-                }else{
-                    return message.ERROR_NOT_FOUND
-                }
+
+    try {
+        let result = await tipoCategoriaDAO.selectAllTipoCategoriaCompleto()
+
+        if(result){
+            if(result.length > 0){
+                message.DEFAULT_MESSAGE.status                  = message.SUCCESS_RESPONSE.status
+                message.DEFAULT_MESSAGE.status_code             = message.SUCCESS_RESPONSE.status_code
+                message.DEFAULT_MESSAGE.response.count          = result.length
+                message.DEFAULT_MESSAGE.response.tipo_categoria = result
+
+                return message.DEFAULT_MESSAGE // 200
             }else{
-                return message.ERROR_INTERNAL_SERVER_MODEL //500 (model)
+                return message.ERROR_NOT_FOUND // 404
             }
-    
-        } catch (error) {
-            return message.ERROR_INTERNAL_SERVER_CONTROLLER //500 (controller)
+        }else{
+            return message.ERROR_INTERNAL_SERVER_MODEL // 500
         }
+
+    } catch (error) {
+        console.log(error) // ← vai mostrar o erro real no terminal
+        return message.ERROR_INTERNAL_SERVER_CONTROLLER // 500
+    }
 }
+
 
 //Função para buscar um tipo categoria pelo ID
 const buscarTipoCategoria = async function(id){
@@ -248,6 +248,26 @@ const excluirTipoIdCategoria = async function(idCategoria){
     }
 }
 
+// Função para excluir a relação filtrando pelo ID do tipo
+// Utilizada no update do tipo
+const excluirTipoCategoriaByIdTipo = async function(idTipo) {
+    let message = JSON.parse(JSON.stringify(config_message))
+    try {
+        let result = await tipoCategoriaDAO.deleteTiposByIdTipo(idTipo)
+
+        if (result) {
+            message.DEFAULT_MESSAGE.status      = message.SUCCESS_DELETE_ITEM.status
+            message.DEFAULT_MESSAGE.status_code = message.SUCCESS_DELETE_ITEM.status_code
+            message.DEFAULT_MESSAGE.message     = message.SUCCESS_DELETE_ITEM.message
+            return message.DEFAULT_MESSAGE
+        } else {
+            return message.ERROR_INTERNAL_SERVER_MODEL
+        }
+    } catch (error) {
+        return message.ERROR_INTERNAL_SERVER_CONTROLLER
+    }
+}
+
 
 //Função para validar todos os dados do tipo e categoria
 // (Obrigatórios, qtde de caracteres, etc)
@@ -269,10 +289,11 @@ const validarDadosTipoCategoria = async function(tipoCategoria){
 module.exports = {
     inserirNovoTipoCategoria,
     atualizarTipoCategoria,
-    listarGeneroFilme,
+    listarTipoCategoria,
     buscarTipoCategoria,
     buscarCategoriaIdTipo,
     buscarTipoIdCategoria,
     excluirTipoCategoria,
-    excluirTipoIdCategoria
+    excluirTipoIdCategoria,
+    excluirTipoCategoriaByIdTipo
 }
