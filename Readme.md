@@ -1,12 +1,12 @@
 # VibeCoffee-BackEnd-ADM
 
-## ☕ Projeto Integrador - SENAI
+##  Projeto Integrador - SENAI
 
 Este projeto foi desenvolvido como parte do **Projeto Integrador do curso Técnico em Desenvolvimento de Sistemas do SENAI**, com o objetivo de aplicar conceitos de desenvolvimento backend, banco de dados relacionais, APIs RESTful, autenticação de usuários e boas práticas de programação.
 
 O sistema **VibeCoffee** consiste em uma API administrativa responsável pelo gerenciamento de produtos, categorias, tipos e usuários de uma cafeteria fictícia, permitindo operações completas de cadastro, consulta, atualização e remoção de dados. A API é construída com Node.js e Express, utilizando MySQL como banco de dados e autenticação via JSON Web Tokens (JWT).
 
-## 🚀 Tecnologias Utilizadas
+##  Tecnologias Utilizadas
 
 *   **Node.js**: Ambiente de execução JavaScript assíncrono e orientado a eventos.
 *   **Express.js**: Framework web rápido e minimalista para Node.js, utilizado para construir a API RESTful.
@@ -16,7 +16,7 @@ O sistema **VibeCoffee** consiste em uma API administrativa responsável pelo ge
 *   **CORS**: Middleware para Express.js que habilita o Cross-Origin Resource Sharing, permitindo requisições de diferentes domínios.
 *   **Body-parser**: Middleware para analisar corpos de requisição HTTP, como JSON e URL-encoded.
 
-## 📂 Estrutura do Projeto
+##  Estrutura do Projeto
 
 O projeto segue uma estrutura modular e organizada para facilitar a manutenção e escalabilidade:
 
@@ -137,7 +137,7 @@ O projeto utiliza **MySQL** como sistema de gerenciamento de banco de dados. Voc
     };
     ```
 
-## ▶️ Execução do Projeto
+##  Execução do Projeto
 
 Para iniciar a API, execute o seguinte comando na raiz do projeto:
 
@@ -149,7 +149,7 @@ node app.js
 
 A API estará disponível em `http://localhost:8080`. A documentação Swagger estará acessível em `http://localhost:8080/api-docs`.
 
-## 🔒 Autenticação (JWT)
+##  Autenticação (JWT)
 
 A API utiliza JSON Web Tokens (JWT) para autenticação e autorização. As rotas que exigem autenticação esperam um token JWT válido no cabeçalho `x-access-token` da requisição.
 
@@ -158,7 +158,7 @@ A API utiliza JSON Web Tokens (JWT) para autenticação e autorização. As rota
 
 Para obter um token, utilize o endpoint de autenticação de usuário (`POST /autenticar`).
 
-## 🗺️ Endpoints da API
+##  Endpoints da API
 
 A base URL para todos os endpoints é `http://localhost:8080/v1/vibecoffee`.
 
@@ -609,7 +609,7 @@ As respostas de erro da API seguem um padrão consistente:
     }
     ```
 
-## 🤝 Contribuição
+##  Contribuição
 
 Contribuições são bem-vindas! Para contribuir com o projeto, siga os passos:
 
@@ -619,11 +619,11 @@ Contribuições são bem-vindas! Para contribuir com o projeto, siga os passos:
 4.  Envie para o branch original (`git push origin feature/minha-feature`).
 5.  Abra um Pull Request detalhando suas alterações.
 
-## 📄 Licença
+##  Licença
 
 Este projeto está licenciado sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
 
-## 🧑‍💻 Autor(es)
+##  Autor(es)
 
 *   Cosme Ribeiro ([Cosme-CR](https://github.com/Cosme-CR))
 *   Lucas Duarte ([k4ir0sld](https://github.com/k4ir0sld))
